@@ -1,5 +1,9 @@
 # java容器
 
+[TOC]
+
+
+
 # 一、概览
 
 容器主要包括 Collection 和 Map 两种，Collection 存储着对象的集合，而 Map 存储着键值对（两个对象）的映射表。
@@ -110,7 +114,7 @@ private static final int DEFAULT_CAPACITY = 10;
 
 扩容操作需要调用 `Arrays.copyOf()` 把原数组整个复制到新数组中，这个操作代价很高，因此最好在创建 ArrayList 对象时就指定大概的容量大小，减少扩容操作的次数。
 
-```
+```java
 public boolean add(E e) {
     ensureCapacityInternal(size + 1);  // Increments modCount!!
     elementData[size++] = e;
@@ -148,7 +152,7 @@ private void grow(int minCapacity) {
 
 需要调用 System.arraycopy() 将 index+1 后面的元素都复制到 index 位置上，该操作的时间复杂度为 O(N)，可以看到 ArrayList 删除元素的代价是非常高的。
 
-```
+```java
 public E remove(int index) {
     rangeCheck(index);
     modCount++;
@@ -173,7 +177,7 @@ transient Object[] elementData; // non-private to simplify nested class access
 
 ArrayList 实现了 writeObject() 和 readObject() 来控制只序列化数组中有元素填充那部分内容。
 
-```
+```java
 private void readObject(java.io.ObjectInputStream s)
     throws java.io.IOException, ClassNotFoundException {
     elementData = EMPTY_ELEMENTDATA;
@@ -217,7 +221,7 @@ private void writeObject(java.io.ObjectOutputStream s)
 
 序列化时需要使用 ObjectOutputStream 的 writeObject() 将对象转换为字节流并输出。而 writeObject() 方法在传入的对象存在 writeObject() 的时候会去反射调用该对象的 writeObject() 来实现序列化。反序列化使用的是 ObjectInputStream 的 readObject() 方法，原理类似。
 
-```
+```java
 ArrayList list = new ArrayList();
 ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
 oos.writeObject(list);
@@ -235,7 +239,7 @@ modCount 用来记录 ArrayList 结构发生变化的次数。结构发生变化
 
 它的实现与 ArrayList 类似，但是使用了 synchronized 进行同步。
 
-```
+```java
 public synchronized boolean add(E e) {
     modCount++;
     ensureCapacityHelper(elementCount + 1);
@@ -255,7 +259,7 @@ public synchronized E get(int index) {
 
 Vector 的构造函数可以传入 capacityIncrement 参数，它的作用是在扩容时使容量 capacity 增长 capacityIncrement。如果这个参数的值小于等于 0，扩容时每次都令 capacity 为原来的两倍。
 
-```
+```java
 public Vector(int initialCapacity, int capacityIncrement) {
     super();
     if (initialCapacity < 0)
@@ -279,7 +283,7 @@ private void grow(int minCapacity) {
 
 调用没有 capacityIncrement 的构造函数时，capacityIncrement 值被设置为 0，也就是说默认情况下 Vector 每次扩容时容量都会翻倍。
 
-```
+```java
 public Vector(int initialCapacity) {
     this(initialCapacity, 0);
 }
@@ -298,14 +302,14 @@ public Vector() {
 
 可以使用 `Collections.synchronizedList();` 得到一个线程安全的 ArrayList。
 
-```
+```java
 List<String> list = new ArrayList<>();
 List<String> synList = Collections.synchronizedList(list);
 ```
 
 也可以使用 concurrent 并发包下的 CopyOnWriteArrayList 类。
 
-```
+```java
 List<String> list = new CopyOnWriteArrayList<>();
 ```
 
@@ -319,7 +323,7 @@ List<String> list = new CopyOnWriteArrayList<>();
 
 写操作结束之后需要把原始数组指向新的复制数组。
 
-```
+```java
 public boolean add(E e) {
     final ReentrantLock lock = this.lock;
     lock.lock();
@@ -361,7 +365,7 @@ CopyOnWriteArrayList 在写操作的同时允许读操作，大大提高了读�
 
 基于双向链表实现，使用 Node 存储链表节点信息。
 
-```
+```java
 private static class Node<E> {
     E item;
     Node<E> next;
@@ -371,7 +375,7 @@ private static class Node<E> {
 
 每个链表存储了 first 和 last 指针：
 
-```
+```java
 transient Node<E> first;
 transient Node<E> last;
 ```
@@ -393,7 +397,7 @@ ArrayList 基于动态数组实现，LinkedList 基于双向链表实现。Array
 
 内部包含了一个 Entry 类型的数组 table。Entry 存储着键值对。它包含了四个字段，从 next 字段我们可以看出 Entry 是一个链表。即数组中的每个位置被当成一个桶，一个桶存放一个链表。HashMap 使用拉链法来解决冲突，同一个链表中存放哈希值和散列桶取模运算结果相同的 Entry。
 
-<img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200604173833079.png" alt="image-20200604173833079" style="zoom:80%;" />
+<img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200604173833079.png" alt="image-20200604173833079" style="zoom: 50%;" />
 
 
 
@@ -453,7 +457,7 @@ static class Entry<K,V> implements Map.Entry<K,V> {
 
 ### 2. 拉链法的工作原理
 
-```
+```java
 HashMap<String, String> map = new HashMap<>();
 map.put("K1", "V1");
 map.put("K2", "V2");
@@ -472,7 +476,11 @@ map.put("K3", "V3");
 - 计算键值对所在的桶；
 - 在链表上顺序查找，时间复杂度显然和链表的长度成正比。
 
-<img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200604173919942.png" alt="image-20200604173919942" style="zoom:80%;" />
+<img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200604173919942.png" alt="image-20200604173919942" style="zoom: 50%;" />
+
+
+
+因此，Java中HashMap是利用“拉链法”处理HashCode的碰撞问题。
 
 
 
@@ -767,6 +775,99 @@ static final int tableSizeFor(int cap) {
 - HashMap 的迭代器是 fail-fast 迭代器。
 - HashMap 不能保证随着时间的推移 Map 中的元素次序是不变的。
 
+### 10. 为什么初始容量是16
+
+当容量为2的幂时，上述n -1 对应的二进制数全为1，这样才能保证它和key的hashcode做&运算后，能够均匀分布，这样才能减少hash碰撞的次数。至于默认值为什么是16，而不是2 、4、8，或者32、64、1024等，我想应该就是个折中处理，过小会导致放不下几个元素，就要进行扩容了，而扩容是一个很消耗性能的操作。取值过大的话，无疑会浪费更多的内存空间。因此在日常开发中，如果可以预估HashMap会存入节点的数量，则应该在初始化时，指定其容量。
+
+### 11. 为什么负载因子是0.75
+
+也是一个综合考虑，如果设置过小，HashMap每put少量的数据，都要进行一次扩容，而扩容操作会消耗大量的性能。如果设置过大的话，如果设成1，容量还是16，假设现在数组上已经占用的15个，再要put数据进来，计算数组index时，发生hash碰撞的概率将达到15/16，这违背的HashMap减少hash碰撞的原则。
+
+### 12. HashMap的构造函数
+
+1. 无参构造方法HashMap()
+
+```java
+public HashMap() {    //无参构造器
+        //负载因子为默认值 0.75f
+        //容量为默认初始值 16
+        this.loadFactor = DEFAULT_LOAD_FACTOR; // all other fields defaulted
+}
+```
+
+2. 有一个初始容量参数的构造方法HashMap(int initialCapacity)
+
+ 参数：initialCapacity 初始容量
+
+```java
+ public HashMap(int initialCapacity) {
+        //此处通过把第二个参数负载因子使用默认值0.75f，然后调用有两个参数的构造方法
+        this(initialCapacity, DEFAULT_LOAD_FACTOR);
+    }
+```
+
+3. 有两个参数的构造方法HashMap(int initialCapacity, float loadFactor)
+
+参数：initialCapacity 初始容量
+
+参数：loadFactor 负载因子
+
+```java
+/**
+     * Constructs an empty <tt>HashMap</tt> with the specified initial
+     * capacity and load factor.
+     * 通过指定的初始容量和负载因子初始化一个空的HashMap
+     *
+     * @param  initialCapacity the initial capacity   初始化容量
+     * @param  loadFactor      the load factor        负载因子
+     * @throws IllegalArgumentException if the initial capacity is negative
+     *         or the load factor is nonpositive
+     * 如果初始容量或者负载因子为负数，则会抛出非法数据异常
+     */
+    public HashMap(int initialCapacity, float loadFactor) {
+        if (initialCapacity < 0)   //如果初始容量小于0，抛出异常
+            throw new IllegalArgumentException("Illegal initial capacity: " +
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)  //如果初始容量超过最大容量（1<<32）
+            initialCapacity = MAXIMUM_CAPACITY;  //则使用最大容量作为初始容量
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))  //如果负载因子小于等于0或者不是数字，则抛出异常
+            throw new IllegalArgumentException("Illegal load factor: " +
+                                               loadFactor);
+        this.loadFactor = loadFactor;                //把负载因子赋值给成员变量loadFactor
+ 
+//调用tableSizeFor方法计算出不小于initialCapacity的最小的2的幂的结果，并赋给成员变量threshold
+        this.threshold = tableSizeFor(initialCapacity); 
+    }
+```
+
+
+
+### 13. HashMap的线程安全
+
+**线程不安全的原因：**
+
+在多线程环境下，假设有容器map，其存储的情况如下图所示（淡蓝色为已有数据）。
+
+![img](https://img-blog.csdn.net/20160505174455202)
+
+此时的map已经达到了扩容阈值12（16 * 0.75 = 12），而此时线程A与线程B同时对map容器进行插入操作，那么都需要扩容。此时可能出现的情况如下：线程A与线程B都进行了扩容，此时便有两个新的table，那么再赋值给原先的table变量时，便会出现其中一个newTable会被覆盖，假如线程B扩容的newTable覆盖了线程A扩容的newTable，并且是在A已经执行了插入操作之后，那么就会出现线程A的插入失效问题，也即是如下图中的两个table只能有一个会最后存在，而其中一个插入的值会被舍弃的问题。
+![这里写图片描述](https://img-blog.csdn.net/20160505174914780)
+
+**那么怎么才能让HashMap变成线程安全的**：
+
+1.替换成Hashtable，Hashtable通过对整个表上锁实现线程安全，因此效率比较低
+
+2.使用Collections类的synchronizedMap方法包装一下。方法如下：
+
+```java
+public static <K,V> Map<K,V> synchronizedMap(Map<K,V> m) 
+```
+
+ 返回由指定映射支持的同步（线程安全的）映射
+
+3.使用ConcurrentHashMap，它使用分段锁来保证线程安全，效率高，推荐使用
+
+
 ## ConcurrentHashMap
 
 ### 1. 存储结构
@@ -819,7 +920,7 @@ static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
 每个 Segment 维护了一个 count 变量来统计该 Segment 中的键值对个数。
 
-```
+```java
 /**
  * The number of elements. Accessed only either within locks
  * or among other volatile reads that maintain visibility.

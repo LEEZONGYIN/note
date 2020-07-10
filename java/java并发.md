@@ -1,5 +1,9 @@
 # java并发
 
+
+
+
+
 ## 线程和进程
 
 下图是 Java 内存区域，通过下图我们从 JVM 的角度来说一下线程和进程之间的关系。
@@ -138,6 +142,34 @@ synchronized 是依赖于 JVM 实现的，前面我们也讲到了 虚拟机团�
 
 **④ 性能已不是选择标准**
 
+**比较**
+
+**1. 锁的实现**
+
+synchronized 是 JVM 实现的，而 ReentrantLock 是 JDK 实现的。
+
+**2. 性能**
+
+新版本 Java 对 synchronized 进行了很多优化，例如自旋锁等，synchronized 与 ReentrantLock 大致相同。
+
+**3. 等待可中断**
+
+当持有锁的线程长期不释放锁的时候，正在等待的线程可以选择放弃等待，改为处理其他事情。
+
+ReentrantLock 可中断，而 synchronized 不行。
+
+**4. 公平锁**
+
+公平锁是指多个线程在等待同一个锁时，必须按照申请锁的时间顺序来依次获得锁。
+
+synchronized 中的锁是非公平的，ReentrantLock 默认情况下也是非公平的，但是也可以是公平的。
+
+**5. 锁绑定多个条件**
+
+一个 ReentrantLock 可以同时绑定多个 Condition 对象。
+
+
+
 ##### 公平锁和非公平锁的区别
 
 公平锁：多个线程按照申请锁的顺序去获得锁，线程会直接进入队列去排队，永远都是队列的第一位才能得到锁。
@@ -150,7 +182,7 @@ synchronized 是依赖于 JVM 实现的，前面我们也讲到了 虚拟机团�
 - 优点：可以减少CPU唤醒线程的开销，整体的吞吐效率会高点，CPU也不必取唤醒所有线程，会减少唤起线程的数量。
 - 缺点：你们可能也发现了，这样可能导致队列中间的线程一直获取不到锁或者长时间获取不到锁，导致饿死。
 
-## volatile关键
+## volatile关键字
 
 ### 1.java内存模型
 
@@ -333,7 +365,7 @@ volatile关键字通过`“内存屏障”`来防止指令被重排序。
 
 
 
-## ThreadLlocal
+## ThreadLocal
 
 ### 1.ThreadLocal简介
 
@@ -499,10 +531,11 @@ AtomicInteger 类的部分源码：
     private volatile int value;
 ```
 
-AtomicInteger 类主要利用 CAS (compare and swap) + volatile 和 native 方法来保证原子操作，从而避免 synchronized 的高开销，执行效率大为提升。
+AtomicInteger 类主要利用 **CAS (compare and swap) + volatile 和 native 方法**来保证原子操作，从而避免 synchronized 的高开销，执行效率大为提升。
 
 CAS的原理是拿期望的值和原本的一个值作比较，如果相同则更新成新的值。UnSafe 类的 objectFieldOffset() 方法是一个本地方法，这个方法是用来拿到“原来的值”的内存地址，返回值是 valueOffset。另外 value 是一个volatile变量，在内存中可见，因此 JVM 可以保证任何时刻任何线程总能拿到该变量的最新值。
 
+CAS操作包括三个操作数：需要读写的内存位置(V)、预期原值(A)、新值(B)。如果内存位置与预期原值的A相匹配，那么将内存位置的值更新为新值B。如果内存位置与预期原值的值不匹配，那么处理器不会做任何操作。无论哪种情况，它都会在 CAS 指令之前返回该位置的值。（在 CAS 的一些特殊情况下将仅返回 CAS 是否成功，而不提取当前值。）CAS其实就是一个：我认为位置 V 应该包含值 A；如果包含该值，则将 B 放到这个位置；否则，不要更改该位置，只告诉我这个位置现在的值即可。
 
 
 # 6. AQS
@@ -515,7 +548,7 @@ AQS的全称为（AbstractQueuedSynchronizer），这个类在java.util.concurre
 
 AQS是一个用来构建锁和同步器的框架，使用AQS能简单且高效地构造出应用广泛的大量的同步器，比如我们提到的ReentrantLock，Semaphore，其他的诸如ReentrantReadWriteLock，SynchronousQueue，FutureTask等等皆是基于AQS的。当然，我们自己也能利用AQS非常轻松容易地构造出符合我们自己需求的同步器。
 
-### 2. AQS 原理分析
+## 2. AQS 原理分析
 
 AQS 原理这部分参考了部分博客，在5.2节末尾放了链接。
 
@@ -560,7 +593,7 @@ protected final boolean compareAndSetState(int expect, int update) {
 
 **AQS定义两种资源共享方式**
 
-- Exclusive
+- **Exclusive**
 
   （独占）：只有一个线程能执行，如ReentrantLock。又可分为公平锁和非公平锁：
 
@@ -609,5 +642,23 @@ Copy to clipboardErrorCopied
 ### 3. AQS 组件总结
 
 - **Semaphore(信号量)-允许多个线程同时访问：** synchronized 和 ReentrantLock 都是一次只允许一个线程访问某个资源，Semaphore(信号量)可以指定多个线程同时访问某个资源。
+
 - **CountDownLatch （倒计时器）：** CountDownLatch是一个同步工具类，用来协调多个线程之间的同步。这个工具通常用来控制线程等待，它可以让某一个线程等待直到倒计时结束，再开始执行。
+
+  用来控制一个或者多个线程等待多个线程。
+
+  维护了一个计数器 cnt，每次调用 countDown() 方法会让计数器的值减 1，减到 0 的时候，那些因为调用 await() 方法而在等待的线程就会被唤醒。
+
+  <img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200702210102250.png" alt="image-20200702210102250" style="zoom:50%;" />
+
 - **CyclicBarrier(循环栅栏)：** CyclicBarrier 和 CountDownLatch 非常类似，它也可以实现线程间的技术等待，但是它的功能比 CountDownLatch 更加复杂和强大。主要应用场景和 CountDownLatch 类似。CyclicBarrier 的字面意思是可循环使用（Cyclic）的屏障（Barrier）。它要做的事情是，让一组线程到达一个屏障（也可以叫同步点）时被阻塞，直到最后一个线程到达屏障时，屏障才会开门，所有被屏障拦截的线程才会继续干活。CyclicBarrier默认的构造方法是 CyclicBarrier(int parties)，其参数表示屏障拦截的线程数量，每个线程调用await()方法告诉 CyclicBarrier 我已经到达了屏障，然后当前线程被阻塞。
+
+  另一介绍：
+
+  用来控制多个线程互相等待，只有当多个线程都到达时，这些线程才会继续执行。和 CountdownLatch 相似，都是通过维护计数器来实现的。线程执行 await() 方法之后计数器会减 1，并进行等待，直到计数器为 0，所有调用 await() 方法而在等待的线程才能继续执行。
+
+  CyclicBarrier 和 CountdownLatch 的一个区别是，CyclicBarrier 的计数器通过调用 reset() 方法可以循环使用，所以它才叫做循环屏障。
+
+  CyclicBarrier 有两个构造函数，其中 parties 指示计数器的初始值，barrierAction 在所有线程都到达屏障的时候会执行一次。
+
+<img src="C:\Users\1308-Lunus\AppData\Roaming\Typora\typora-user-images\image-20200702211718943.png" alt="image-20200702211718943" style="zoom: 67%;" />
